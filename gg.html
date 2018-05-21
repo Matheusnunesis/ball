@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <div style = "width: 600px; height: 900px; border:solid;">
+        <canvas width="600" height="900"></canvas>
+    </div>
+    <script>
+        var cnv = document.querySelector('canvas');
+        var ctx= cnv.getContext('2d');
+        var gravity = 0;
+        var catX = 0;
+        var catY = 0;
+        var velocidadeJogador = 10;
+        var win = true;
+        
+        var v = [];
+        var f = [];
+        
+        var raq = {      
+            x: 250,
+            y: 870,
+            vx: 0,
+            width: 150,
+            height: 20,
+            color: '#0ff'
+        };
+        
+        
+        function desenhaquad(quad){
+            var initX = 30;
+            var initY = 20;
+            while(quad > 0){
+                for(var i = 0 , int = initX; i < quad ; i++ , int += 50){
+                    f.push({
+                        x: int,
+                        y: initY,
+                        width: 30,
+                        height: 30,
+                        color: '#00f',
+                        on : true
+                    });
+                }
+                quad -=2;
+                initY +=50;
+                initX +=50;
+            }
+        }
+        
+        var ball ={
+            radius : 20,
+            vx : Math.floor(Math.random()*10)+1,
+            vy : Math.floor(Math.random()*10)+1,
+            x : 300,
+            y : 400,
+            color : "#f0f",
+            held : false
+        };
+
+        function loop(){
+            window.requestAnimationFrame(loop,cnv);
+            if(win){
+                update();
+                render();
+            }
+            else{
+                ctx.clearRect(0,0,cnv.width,cnv.height);
+                ctx.font = "50pt Tahoma";
+                ctx.fillStyle = '#e45';
+                ctx.fillText("Fim de Jogo", 100, 400);
+                ctx.font = "20pt Tahoma";
+                ctx.fillStyle = '#00f';
+                ctx.fillText("Pressione Enter para jogar novamente", 50, 500);
+            }
+        }
+        
+        function update(){
+                ball.y +=ball.vy;
+                ball.x += ball.vx;
+            
+                if(((raq.x + raq.vx) <= (cnv.width - raq.width)) && ((raq.x + raq.vx) >= 0))
+                      raq.x += raq.vx;
+
+                //quicar no chão
+                if(ball.y + ball.radius > cnv.height){
+                   win = false;
+                }
+                //quicar no teto
+                if(ball.y - ball.radius < 0){
+                    ball.y = 0 + ball.radius;
+                    ball.vy *= -1;
+                }
+
+                //quicar nas paredes
+                if(ball.x - ball.radius < 0 || ball.x + ball.radius > cnv.width){
+                    ball.x = ball.x - ball.radius < 0 ? ball.radius : cnv.width - ball.radius;
+                    ball.vx *= -1;
+                }
+                //colisão com quadrados
+                for(var j=0 ; j < f.length ; j++ ){
+
+                    if(f[j].on){
+                        var dp1 = Math.hypot((ball.x - f[j].x),       (ball.y - f[j].y));
+                        var dp2 = Math.hypot((ball.x - (f[j].x + 30)),(ball.y - f[j].y));
+                        var dp3 = Math.hypot((ball.x - f[j].x),       (ball.y - (f[j].y + 30)));
+                        var dp4 = Math.hypot((ball.x - (f[j].x + 30)),(ball.y - (f[j].y + 30)));
+
+                        if(dp1 <= ball.radius || dp2 <= ball.radius || dp3 <= ball.radius || dp4 <= ball.radius){
+                            f[j].on = false;
+                            ball.vx *= -1;                            
+                            ball.vy *= -1;
+                        }
+                    }
+                }
+                //colisão com raquete
+                if(((Math.hypot((ball.x - raq.x) , (ball.y - raq.y)) <= ball.radius) ||
+                    (Math.hypot((ball.x - (raq.x + 150)) , (ball.y - raq.y)) <= ball.radius) ||
+                    ((ball.y + ball.radius + 30) > cnv.height) && (ball.x > raq.x) && (ball.x < raq.x + raq.width))){ 
+                    ball.vy *= -1;        
+                }
+        }
+        
+        function render(){
+            //desenha bola
+            ctx.clearRect(0,0,cnv.width,cnv.height);
+            ctx.fillStyle = ball.color;
+            ctx.beginPath();
+            ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2);
+            ctx.closePath9;
+            ctx.fill();
+            //desenha raquete
+            ctx.fillStyle = raq.color;
+            ctx.fillRect(raq.x, raq.y, raq.width, raq.height);
+            
+            for(var i = 0 ; i < f.length ; i++){
+                if(f[i].on){
+                    ctx.fillStyle = f[i].color;
+                    ctx.fillRect(f[i].x, f[i].y, f[i].width, f[i].height);
+                }
+            }
+        }    
+        document.addEventListener('keydown', function(e){
+                if(e.keyCode == 39)
+				{
+					if((raq.x + raq.vx) < (cnv.width - raq.width))
+						raq.vx = +velocidadeJogador;
+				}
+				if(e.keyCode == 37)
+				{
+					if((raq.x - velocidadeJogador) > 0)
+						raq.vx = -1 * velocidadeJogador;
+				}
+                if(e.keyCode == 13){
+                    if(!win){
+                        ball.x = 300;
+                        ball.y = 400;
+                        win = true;
+                        for(var i = 0 ; i < f.length ; i++)
+                            f[i].on = true;
+                        raq.x = 250;
+                        raq.y = 870;
+                    }
+                }   
+        },false);
+        
+        document.addEventListener('keyup', function(e){
+                if(e.keyCode == 39)
+				{
+					if(raq.x > 0)
+						raq.vx = 0;
+				}
+				if(e.keyCode == 37)
+				{
+					if(raq.x < (cnv.width - raq.width))
+						raq.vx = 0;
+				}
+        },false);
+        
+        
+        desenhaquad(11);
+        loop();
+    </script>
+</body>
+</html>
