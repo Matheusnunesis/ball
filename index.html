@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        canvas{
+            border: 1px solid black;
+        }
+    
+    </style>
+</head>
+<body>
+    <div>
+        <canvas id="canvas" width="500" height="600"></canvas>
+    </div>
+
+    <script>
+        //=================================Ambiente
+        var cnv = document.getElementById("canvas");
+        var ctx = cnv.getContext('2d');
+        var altura = cnv.height;
+        var largura = cnv.width;
+        var p = [];
+        //=================================Fisica
+        var velJogador = 10;
+        var velBola = 3;
+        //=================================Objetos
+        var raq = {
+            x : (largura / 2) - 50,
+            y : altura - 10 -30,
+            alturaP : 20,
+            larguraP : 100,
+            vx : 0,
+            vy:0,
+            cor : "red"
+        }
+        var bola = {
+            raio : 10,
+            vx : velBola,
+            vy : velBola,
+            x : (largura/2) -20,
+            y : (altura/2)-20,
+            cor : "green",
+        }
+
+        function desenhaquad(quad){
+            var initX = 20;
+            var initY = 10;
+            while(quad > 0){
+                for(var i = 0 , int = initX; i < quad ; i++ , int += 30){
+                    p.push({
+                        x: int,
+                        y: initY,
+                        width: 20,
+                        height: 20,
+                        color: '#00f',
+                        on : true
+                    });
+                }
+                quad -=2;
+                initY +=30;
+                initX +=30;
+            }
+        }
+        desenhaquad(15)
+        //=================================Eventos
+        document.addEventListener('keypress', function(e){
+            if(e.code == "KeyD"){
+                raq.vx = velJogador;
+            }
+            else if(e.code == "KeyA"){
+                raq.vx = -1 * velJogador;
+            }
+        });
+        document.addEventListener('keyup', function(e){
+            if(e.code == "KeyA" || e.code == "KeyD"){
+                raq.vx = 0;
+            }
+        });
+        //=================================Funções
+        function update(){
+            bola.x += bola.vx;
+            bola.y += bola.vy;
+
+            //colisão da raquete com as paredes
+            if(((raq.x + raq.vx) <= (largura  - raq.larguraP)) && ((raq.x + raq.vx) >= 0))
+                raq.x += raq.vx;
+
+            //colisão da bola com as paredes
+            if(bola.x - bola.raio <= 0 || bola.x + bola.raio >= largura){
+                bola.vx *= -1;
+            }
+            //colisão da bola com o teto
+            if((bola.y - bola.raio) - bola.vx < 0){
+                bola.vy *= -1;
+            }
+            //colisão da bola com o chão;
+            if((bola.y + bola.raio) + bola.vx > altura){
+                bola.vy *= -1;
+            }
+            //colisão da bola com a raquete
+            if(((bola.x - bola.raio*2 <= raq.x + raq.larguraP) && (bola.x + bola.raio*2 >=  raq.x)) &&
+                (bola.y - bola.raio >= (raq.y - raq.alturaP)))
+                bola.vy *= -1;
+            //colisão da bola com os quadrados
+            for(var j=0 ; j < p.length ; j++ ){
+                if(p[j].on){
+                    var dp1 = Math.hypot((bola.x - p[j].x),       (bola.y - p[j].y));
+                    var dp2 = Math.hypot((bola.x - (p[j].x + p[j].width)),(bola.y - p[j].y));
+                    var dp3 = Math.hypot((bola.x - p[j].x),       (bola.y - (p[j].y + p[j].height)));
+                    var dp4 = Math.hypot((bola.x - (p[j].x + p[j].width)),(bola.y - (p[j].y + p[j].height)));
+
+                    if(dp1 <= bola.raio || dp2 <= bola.raio || dp3 <= bola.raio || dp4 <= bola.raio){
+                        p[j].on = false;
+                        bola.vx *= -1;                            
+                        bola.vy *= -1;
+                        console.log("bateu");
+                    }
+                }
+            }
+        }
+        function draw(){
+            //limpa tela
+            ctx.clearRect(0, 0, largura, altura);
+            //desenha raquete
+            ctx.fillStyle = raq.cor;
+            ctx.fillRect(raq.x, raq.y, raq.larguraP, raq.alturaP);
+            //desenha bola
+            ctx.fillStyle = bola.cor;
+            ctx.beginPath();
+            ctx.arc(bola.x, bola.y, bola.raio, 0, Math.PI*2);
+            ctx.closePath();
+            ctx.fill();
+            //desenha quadrados
+            for(var i = 0 ; i < p.length ; i++){
+                if(p[i].on){
+                    ctx.fillStyle = p[i].color;
+                    ctx.fillRect(p[i].x, p[i].y, p[i].width, p[i].height);
+                }
+            }
+        }
+        function loop(){
+            window.requestAnimationFrame(loop,cnv);
+
+            update();
+            draw();
+
+        }
+        loop();
+        //'#' + Math.random().toString(16).slice(2, 8).toUpperCase(); // gera cor randomica
+    
+    </script>
+
+
+</body>
+</html>
