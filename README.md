@@ -1,4 +1,4 @@
-# Pong em JavaScript
+# Breakout em JavaScript
 
 Jogo desenvolvido para aula do 1° HackerPETspace
 
